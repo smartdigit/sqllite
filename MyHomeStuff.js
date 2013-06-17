@@ -25,29 +25,54 @@ function onInit(){
 }
 
 function initDB(){
-    var shortName = 'stuffDB';
+    var shortName = 'db';
     var version = '1.0';
-    var displayName = 'MyStuffDB';
-    var maxSize = 65536; // in bytes
+    var displayName = 'db';
+    var maxSize = 9999999; // in bytes
     localDB = window.openDatabase(shortName, version, displayName, maxSize);
 }
 
-function createTables(){
-    var query = 'CREATE TABLE IF NOT EXISTS items(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, amount VARCHAR NOT NULL, name VARCHAR NOT NULL);';
+
+//Funtion to Create Tables
+/*function createTables(slqQuery, tbName){
+    var query = slqQuery;
     try {
         localDB.transaction(function(transaction){
             transaction.executeSql(query, [], nullDataHandler, errorHandler);
-            updateStatus("Table 'items' is present");
+            updateStatus("Table '"+tbName+"' is present");
         });
     } 
     catch (e) {
-        updateStatus("Error: Unable to create table 'items' " + e + ".");
+        updateStatus("Error: Unable to create table '"+tbName+"' " + e + ".");
         return;
     }
 }
+var query = 'CREATE TABLE IF NOT EXISTS items(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, amount VARCHAR NOT NULL, name VARCHAR NOT NULL);';
 
 
+var queries = [];
+queries = 'CREATE TABLE IF NOT EXISTS Customer (CustomerID INTEGER PRIMARY KEY  NOT NULL, PartyID INTEGER, CustomerKey TEXT, CreateDate TEXT, OrganizationName TEXT, FederalTaxID TEXT, KeyFederalTaxID INTEGER, PersonalIDNumber TEXT, SalesManID INTEGER, ZoneID INTEGER, PaymentID INTEGER, TenderID INTEGER, CarrierID INTEGER, EmailAddress TEXT, Telephone1 TEXT, Telephone2 TEXT, Telephone3 TEXT, Telephone4 TEXT, MobileTelephone1 TEXT, MobileTephone2 TEXT, Fax TEXT, CustomerGroupDescription TEXT, PriceLineID INTEGER, CustomerLevel INTEGER, LastTransSerial TEXT, LastTransDocNumber INTEGER, LastTransDicument TEXT, LimitType INTEGER, LimitPurchaseDays INTEGER, LimitPuchaseValue INTEGER, LimitPurchaseCurrencyID TEXT, LimitPurchaseEchange INTEGER, LimitPurchaseFactor INTEGER, DirectDicount INTEGER, GlobalDiscount INTEGER, Comments TEXT, AplyRetentionTax TEXT, RetentionTax INTEGER, TemporaryID INTEGER, Locked TEXT, CardID TEXT, UseIntraStat TEXT, ActiveParty TEXT, CashDiscountTermID TEXT, TaxablePesonType INTEGER);';
+queries = 'CREATE TABLE IF NOT EXISTS CustomerLedgerAccount (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, InternalID INTEGER, ReconciledFlag TEXT, CreateDate TEXT, DeferredPaymentDate TEXT, ContractReferenceNumber TEXT, TransSerial TEXT, TransDocument TEXT, TransDocNumber INTEGER, TransInstallmentID INTEGER, TotalAmount REAL, TotalPendingAmount REAL, OperationID INTEGER, TotalAccountSign INTEGER, BalanceAmount REAL, BalanceAccountSign INTEGER, PartyTypeCode INTEGER, PartyID INTEGER, SalesManID INTEGER, CurrencyID TEXT, CurrencyExchange REAL, CurrencyFactor INTEGER, EschangeDifCurrency REAL, RetentionTotalAmount REAL, RetentionPendingAmount REAL, DebitTotalAmount REAL, CreditTotalAmount REAL, TransStatus INTEGER, LedgerCounter INTEGER, PartyAccountTypeID TEXT, OriginTransSerial TEXT, OriginTransDocument TEXT, OriginTranDocNumber INTEGER, PartyAddressID INTEGER);';
+queries = 'CREATE TABLE IF NOT EXISTS Users (ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, AppUserID INTEGER, AppUserName TEXT, AppUserPassword TEXT);';
 
+var key;
+for(key in queries){
+	createTables(queries[key], key){
+}*/
+
+function createTables(){
+    var query = 'CREATE TABLE IF NOT EXISTS Users (ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, AppUserID INTEGER, AppUserName VARCHAR NOT NULL, AppUserPassword VARCHAR NOT NULL);';
+    try {
+        localDB.transaction(function(transaction){
+            transaction.executeSql(query, [], nullDataHandler, errorHandler);
+            updateStatus("Table 'Users' is present");
+        });
+    } 
+    catch (e) {
+        updateStatus("Error: Unable to create table 'Users' " + e + ".");
+        return;
+    }
+}
 
 //2. query db and view update
 
@@ -59,10 +84,10 @@ function onUpdate(){
     var amount = document.itemForm.amount.value;
     var name = document.itemForm.name.value;
     if (amount == "" || name == "") {
-        updateStatus("'Amount' and 'Name' are required fields!");
+        updateStatus("'AppUserID' and 'AppUserName' are required fields!");
     }
     else {
-        var query = "update items set amount=?, name=? where id=?;";
+        var query = "UPDATE Users SET AppUserID=?, AppUserName=? WHERE ID=?;";
         try {
             localDB.transaction(function(transaction){
                 transaction.executeSql(query, [amount, name, id], function(transaction, results){
@@ -86,7 +111,7 @@ function onUpdate(){
 function onDelete(){
     var id = document.itemForm.id.value;
     
-    var query = "delete from items where id=?;";
+    var query = "DELETE FROM Users WHERE ID=?;";
     try {
         localDB.transaction(function(transaction){
         
@@ -112,10 +137,10 @@ function onCreate(){
     var amount = document.itemForm.amount.value;
     var name = document.itemForm.name.value;
     if (amount == "" || name == "") {
-        updateStatus("Error: 'Amount' and 'Name' are required fields!");
+        updateStatus("Error: 'AppUserID' and 'AppUserName' are required fields!");
     }
     else {
-        var query = "insert into items (amount, name) VALUES (?, ?);";
+        var query = "INSERT INTO Users (AppUserID, AppUserName, AppUserPassword) VALUES (?, ?, '123');";
         try {
             localDB.transaction(function(transaction){
                 transaction.executeSql(query, [amount, name], function(transaction, results){
@@ -137,9 +162,9 @@ function onCreate(){
 }
 
 function onSelect(htmlLIElement){
-  var id = htmlLIElement.getAttribute("id");
+	var id = htmlLIElement.getAttribute("id");
 	
-	query = "SELECT * FROM items where id=?;";
+	query = "SELECT * FROM Users where ID=?;";
     try {
         localDB.transaction(function(transaction){
         
@@ -147,7 +172,7 @@ function onSelect(htmlLIElement){
             
                 var row = results.rows.item(0);
                 
-                updateForm(row['id'], row['amount'], row['name']);
+                updateForm(row['ID'], row['AppUserID'], row['AppUserName']);
                 
             }, function(transaction, error){
                 updateStatus("Error: " + error.code + "<br>Message: " + error.message);
@@ -171,7 +196,7 @@ function queryAndUpdateOverview(){
     };
     
 	//read db data and create new table rows
-    var query = "SELECT * FROM items;";
+    var query = "SELECT * FROM Users;";
     try {
         localDB.transaction(function(transaction){
         
@@ -180,11 +205,11 @@ function queryAndUpdateOverview(){
                 
                     var row = results.rows.item(i);
                     var li = document.createElement("li");
-					li.setAttribute("id", row['id']);
+					li.setAttribute("id", row['ID']);
                     li.setAttribute("class", "data");
                     li.setAttribute("onclick", "onSelect(this)");
                     
-                    var liText = document.createTextNode(row['amount'] + " x "+ row['name']);
+                    var liText = document.createTextNode(row['AppUserID'] + " x "+ row['AppUserName']);
                     li.appendChild(liText);
                     
                     document.getElementById("itemData").appendChild(li);
